@@ -1,0 +1,400 @@
+
+           |_|_|_|_|_|_|_|_|_|_|_|_|_|_|_|_|_|_|_|_|__________
+
+                 Cryptologic Haircomb - Natasha Otomoski
+
+                              25 October 2019
+
+                       natasha-otomoski@protonmail.com
+
+                               Block 601002
+
+        0000000000000000001103f2f1f374ee8bf36c64949fcd53e47d0174cf063329
+
+   Abstract: A quantum proof haircomb allows cryptographic tokens to be
+   moved from address to addres on the Bitcoin blockchain without publicly
+   visible history. The transaction history is stored privately, and full
+   nodes only need the history of coins they currently own. If the history
+   is only revealed to the recipient once the commitments are sufficiently
+   buried, the transactions can be reverted (or in flight funds destroyed)
+   only by a miner possessing more than 51% of the global Bitcoin hash rate.
+   Token is issued by claiming the first previously unseen P2WSH output in
+   a block (the combbase commitment). Currently, this is performerd by early
+   adopters based on luck. It is expected that eventually Bitcoin miners add
+   combbase commitment to Bitcoin coinbase, making it effectively merge mined.
+   The supply has 8 decimal places, reward decreases at a subexponential rate.
+   System scales with the number of inputs spent multiplied by the size of one
+   signature (21 hashes). Using a Merkle tree segment signer can route coin to
+   one of 65536 outputs by revealing two commitments (2 hashes), enabling
+   atomic swaps and other constructs.
+
+
+
+
+                                 E
+                                 E
+                                 E
+                                 E          ,-="""=.
+                                 E        .'        `.
+                                 E       (            `.
+                                .E        `.            `..
+                                :.`-.      ,'             .'
+                                `'.  `-.   `.            '.
+                                    `.  `-.  `-.           `-.
+                                       `.  `-.  )             `=-.
+                                          `.   :'              `=-.
+                                            .`               .`-.
+                              _            (                \ `-.
+                           ,'   `.          `.        /`.    \
+                          /        `.         \      |   `.   `.
+                        ,'            `.       )    /      \    \
+                       /     .'`.        `.    )    |       `.   \
+                     ,'    .'    `.         `./     \         `.  \
+                   ,'    .'        `.                \          \  \
+                 ,'    .'            `.               \          `. \
+               ,'   .'                 `.              )          ) (
+             ,'   (                      `.            )         _`."
+         _.-'    __)                       `.         .
+        `""'""                               `"""""""
+                 Fig 1. Inventing a cryptologic haircomb
+
+
+
+
+
+
+
+INTRODUCTION
+
+Bitcoin[1] proposed by Satoshi Nakamoto is the first widely used payment
+system. Its full transfer history is publicly visible, as well as not quantum
+resistant. There exist proposals for anonymity on the Bitcoin blockchain, but so
+far none of them that I am aware of is quantum proof.
+
+MATHEMATICAL BACKGROUND
+
+Cryptographic beta (comb) function to sign 256 bits is defined by the formula:
+
+    2^256 = (X+K-1)!/((X!)*(K-1!))
+
+This is like the 1/BETA function, but only the K (number of chains) is off by
+one, hence cryptographic beta function. Our goal is to solve X for some small
+number of chains (small K). We rearrange the equation and express a polynomial:
+
+    2^256*(K-1)! = (X+1)*(X+2)*(X+3)*...*(X+K-1)
+
+For large X (small K) we know that the right side is close to X^(K-1). In
+fact it is almost exactly (X+K/2)^(K-1). This allows us to approximate:
+
+    2^256*(K-1)! ~= (X+K/2)^(K-1)
+
+We turn the exponent into a root on the other side and subtract the K/2 element:
+
+    X ~= 2^(256/(K-1))*(K-1)!^(1/(K-1)) - K/2
+
+Now we can solve chain length for K=21 chains.
+
+    X ~= 2^(256/20)*(20!)^(1/(20)) - 21/2
+
+We see that, indeed, chain length for K=21 chains is nearly equal to X~=59212.4
+
+ONE TIME PUBLIC KEY GENERATION
+
+We calculate 21 hash-chains of 59213 hashes. We hash the final result and get X.
+
+A-------------------------------->59213 hashes---------------------------->A'\
+B-------------------------------->59213 hashes---------------------------->B'|
+C-------------------------------->59213 hashes---------------------------->C'|
+D-------------------------------->59213 hashes---------------------------->D'|
+E-------------------------------->59213 hashes---------------------------->E'|
+F-------------------------------->59213 hashes---------------------------->F'|
+G-------------------------------->59213 hashes---------------------------->G'|
+H-------------------------------->59213 hashes---------------------------->H'|
+I-------------------------------->59213 hashes---------------------------->I'|
+J-------------------------------->59213 hashes---------------------------->J'|
+K-------------------------------->59213 hashes---------------------------->K' >X
+L-------------------------------->59213 hashes---------------------------->L'|
+M-------------------------------->59213 hashes---------------------------->M'|
+N-------------------------------->59213 hashes---------------------------->N'|
+O-------------------------------->59213 hashes---------------------------->O'|
+P-------------------------------->59213 hashes---------------------------->P'|
+Q-------------------------------->59213 hashes---------------------------->Q'|
+R-------------------------------->59213 hashes---------------------------->R'|
+S-------------------------------->59213 hashes---------------------------->S'|
+T-------------------------------->59213 hashes---------------------------->T'|
+U-------------------------------->59213 hashes---------------------------->U'/
+
+                 Fig 2. Cryptographic hair comb
+
+X is a 256bit public key. The set of the values A...U is the private key.
+
+
+SIGNING/VERIFYING MESSAGES
+
+Given a 256bit number msg it is easy (by using the rows of Pascal's triangle) to
+get the msg-th set of 21 numbers (a...u) that sum to 59213. We use them to derive
+a-th to u-th hash in the corresponding chains. To verify, we do the remainder
+and get X.
+
+A--------------->59213 minus a hashes---->?------->a hashes--------------->A'\
+B--------------->59213 minus b hashes------->?----->b hashes-------------->B'|
+C--------------->59213 minus c hashes----->?------>c hashes--------------->C'|
+D----------------->59213 minus d hashes------->?--->d hashes-------------->D'|
+E---------------->59213 minus e hashes------->?---->e hashes-------------->E'|
+F--------------->59213 minus f hashes------>?----->f hashes--------------->F'|
+G--------------->59213 minus g hashes----->?------>g hashes--------------->G'|
+H--------------->59213 minus h hashes-->?--------->h hashes--------------->H'|
+I--------------->59213 minus i hashes------>?------>i hashes-------------->I'|
+J--------------->59213 minus j hashes---->?------->j hashes--------------->J'|
+K---------------->59213 minus k hashes-------->?--->k hashes-------------->K' >X
+L---------------->59213 minus l hashes------>?---->l hashes--------------->L'|
+M--------------->59213 minus m hashes-->?--------->m hashes--------------->M'|
+N--------------->59213 minus n hashes---->?------->n hashes--------------->N'|
+O--------------->59213 minus o hashes----->?------>o hashes--------------->O'|
+P--------------->59213 minus p hashes------->?---->p hashes--------------->P'|
+Q--------------->59213 minus q hashes------>?----->q hashes--------------->Q'|
+R--------------->59213 minus r hashes--->?-------->r hashes--------------->R'|
+S--------------->59213 minus s hashes-------->?--->s hashes--------------->S'|
+T--------------->59213 minus t hashes------>?----->t hashes--------------->T'|
+U--------------->59213 minus u hashes--->?-------->u hashes--------------->U'/
+
+                 Fig 3. Cryptographic hair comb cutting for signing
+
+SIGNATURE COMMITMENTS
+
+The idea for commitments to enable anonymous coin is not new. Zerocoin[2]
+proposed similiar ideas as well as Jedusor[3] who used Pedersen commitments.
+We simply use hash commitments.
+
+We have observed that signature is just 21 numbers. Suppose we want an anonymous
+token. We take the hash commitment of each of these 21 numbers. It has to be
+a different function than SHA256(x) because that would simply calculate the next
+value in the hash chain. RIPEMD or SHA3 or whatever would work too, but, my
+token uses for this SHA256(whitepaper + x) where + is concatenation.
+This has the added benefit that every coin user implicitly signs-off the rules
+of the token they are supposed to abide by (especially users who generate coins
+will do this too, so that they know how many coins they just generated).
+
+Commitments are then turned into P2WSH addresses and users "tip" to these
+addresses to confirm the transaction. Transaction is just hash of two hashes:
+source address and destination address. COMB Address is for example X (a pubkey),
+or it can be some other type of address, like a liquidity stack or Merkle tree
+segment[4].
+
+
+CHECKING FOR DOUBLE SPENDS
+
+The method for detecting double spends we use is not the trivial one.
+In the trivial method The two X-es are the same (same pubkey) but the two
+signature values we are comparing are valid and different, so we declare that
+a doublespend. But we cannot afford to check every pair of transactions because
+even if we have all the transactions we would have to check all pairs in
+quadratic time.
+
+
+
+But we don't even have the other transaction signature! Just the commitments
+of it. So, what we do, is, we walk from the 21 signature numbers far enough to
+the right and calculate the commit of each value as we walk. And we lookup
+every commit in the hashtable of all the commits harvested from the Bitcoin
+blockchain. If we find in the hashtable a commit that happened after our
+transaction, we ignore such a commit.
+
+
+
+
+COMBBASE TOKENOMICS
+
+The price rise forced by subsidy halvings is not exponential like the one in
+Bitcoin but sub-exponential. The full supply is to be released over a period of
+nearly half of millenia. The reason is if Bitcoin fails for some reason, the
+likely reason is that the Nakamoto pot spurred quantum research that led to the
+demise of ECDSA close around 2140 when the singularity hits (or earlier).
+I predict that haircomb is the logical next step that would last ideally very
+long, so it won't matter if comb token is very cheap for 20 or even 50 years,
+it will get there, and could eventually outlast Bitcoin.
+
+The block reward (combbase) at Bitcoin height h, in COMB unit, is defined to be:
+
+	MAX(2.1-FLOOR((LOG(h)/LOG(2))^6)/100000000, 0)
+
+And in smallest unit (there are 8 decimal places):
+
+	MAX(210000000-FLOOR((LOG(h)/LOG(2))^6), 0)
+
+Note: ^6 is exponentiation to the 6th power
+
+Edge cases:
+
+h=1		2.10000000 COMB
+h=2		2.09999999 COMB
+h=3		2.09999984 COMB
+h=16383001	0.20530062 COMB (hahaha)
+h=21835312	0.00000003 COMB
+h=21835313	0.00000000 COMB
+
+total theoretical maximum of COMB is 12423823.18141419
+
+INITIAL DISTRIBUTION
+
+ 100 % - Claimers on the Bitcoin blockchain
+   0 % - Team (actually just me)
+   0 % - Token sale / ICO / IEO / whatever
+
+WHO GETS THE BLOCK REWARD
+
+If the Bitcoin block contains no P2WSH output, no combbase is awarded.
+
+If the Bitcoin block contains no previously unseen P2WSH output, no combbase is
+awarded.
+
+If the Bitcoin block contains some previously unseen P2WSH output, the first
+previously unseen P2WSH output gets the reward.
+
+First means the first previously
+unseen P2WSH output based on output order (0,1,2,3...), in the first transaction
+that contains previously unseen P2WSH outputs in transaction order (0-9999)
+
+
+This means it is not possible to claim twice using the same comb public key.
+
+The previously unseen property has nothing to do with the Bitcoin balance of the
+address. If one pays to address, drains it and pays to it again it won't qualify
+as previously unseen twice.
+
+However if the block is reorganized (removed from the longest valid chain),
+all P2WSH output addresses that are only in this block become previously
+unseen again. The full reward claimed in a reorganized/orphan block is undone.
+
+HOW EXACTLY SOMEONE GETS THE REWARD
+
+Someone has a valid comb address. For instance an uppercase hex haircomb hash
+X is a valid comb address. Then, calculate commitment of this comb address.
+Commitment is SHA256(whitepaper hash + X). Please note that the X in SHA256 is
+not ascii but raw, I only write it in uppercase hex, because I have hex decoder
+function that only takes uppercase. Lowercase hex is for silly boys.
+
+The result of SHA256 is then encoded as P2WSH address and you are supposed to
+tip that address to attempt to claim the reward.
+
+Once the P2WSH address is first unique P2WSH paid to address in a block the
+reward is credited to the corresponding COMB address.
+
+You may be wondering how does everyone know the COMB address, answer it they
+don't. This is an anonymous token. They only learn about it when you pay to
+them (paying involves giving coin history to them). They hash the source address
+and see the commitment in their utxo set. That moment the coin hops from
+combbase to source address and trickles further.
+
+
+
+LIQUIDITY STACKS
+
+Without liquidity stacks COMB token splitting into smaller denominations is not
+possible. Chaining liquidity stack segments to form a longer stack is roughly
+the COMB equivalent of a Bitcoin transaction with multiple outputs.
+
+Liquidity stack is a triplet change address CH, output address OUT and output
+amount (64bit). The liquidity stack address is simply SHA256(CH + OUT + out).
+
+To chain liquidity stacks to form longer stack you use the child stack address
+as the change address CH of the parent stack segment.
+
+Stack behaves in this way:
+
+When you pay to stack and the amount you've paid is smaller than out, the funds
+are simply stuck in the stack address (they don't reach CH and OUT).
+
+Once the funds people paid to the stack segment exceed "out", the stack segment
+triggers and it moves "out" coins from it's address to OUT and the remaining
+funds are moved to the CH change address.
+
+If more cash is paid to the stack segment in the triggered state, the additional
+cash simply overflows to CH change address.
+
+Whenever some payment that funded the stack is reorganized, the reorganization
+cascades trough the stack correctly and future transfers are also reorganized.
+
+
+
+
+This causes to funds to re-appear in the CH and OUT addresses and they could
+be then cascaded back into the original stack address if this would cause
+the invariant that "out" coins passed to the OUT output to be violated. In such
+reorganization case the stack is un-triggered.
+
+But keep in mind that CH and OUT can be the same address and the liquidity stack
+segment must operate correctly in this scenario too.
+
+Liquidity stacks can be also used to claim combbase. Simply do commitment of
+the liquidity stack address and tip P2WSH address encoding the commitment.
+
+This for example allows claiming multiple combbases to the same haircomb
+anonymously, just set CH=OUT=X and set out as a random number (doesn't matter).
+
+Mining pool payouts could work in this way, they could set CH=OUT=pool main
+wallet and out=bitcoin block height they are currently solving. This way they
+can keep claiming reward to the same address over and over again.
+
+Liquidity stacks allow singing of arbitrary messages by an address. Simply set
+CH=your next address, OUT=message hash, and out=0. In this way the OUT address
+is never credited (the money never go to waste) because the treshold is zero
+COMB.
+
+In the wallet, CH is "To:" and OUT is "To2:" and out is "Amount2:".
+
+MERKLE SEGMENTS
+
+Merkle segment address is hash of two 256bit values. The left object is a hash
+of something that forms a hash linked list of triplets e.g SHA256(next left
+object hash + hashchain tip 1 + hashchain tip 2). The linked list is terminated
+using a next left object hash value of 256 zero bits.
+
+On the right side there is a merkle tree with 16 levels and 65536 leaves.
+
+If on the left side if the next left object = 256 zero bits, then the merkle
+tree is not nested. The two hashchain tips are basically the ends of
+65535-hashes long hashchains. These two hashchains are used to sign a 16bit
+number. This number is the number of the leaf where the funds go to.
+
+It's like the transaction segment except transaction segment has 1 destination
+and the number signed is a 256bit number.
+
+In the merkle segment it has 65536 possible destinations and the number signed
+is the destination where the funds go.
+
+The signature consists of two 256bit values whose commitments are turned
+into P2WSH address that is then tipped to finalize the merkle payment.
+
+If more possible destinations are needed, a huge tree can be generated.
+Huge tree has 65536^N leaves and 16*N levels on the right side. On the left
+side, the linked list must consist of N entries each having two hashchain tips.
+
+The signature for huge tree consists of 2*N hash commitments that need to be
+stored on the blockchain.
+
+
+FUTURE RESEARCH
+
+Further research in the area of payment segments would be nice. People are
+going to be needing atomic swaps and other constructs, and while merkle segments
+enable this, they are not very good solution for many reasons.
+
+
+REFERENCES
+
+1. Satoshi Nakamoto. Bitcoin: A Peer-to-peer Electronic Cash System.
+   https://bitcoin.org/bitcoin.pdf, Oct 2008.
+
+2. Ian Miers, Christina Garman, Matthew Green, and Aviel D. Rubin. Zerocoin:
+   Anonymous distributed e-cash from bitcoin. In IEEE Symposium on Security and
+   Privacy, pages 397- 411, 2013.
+
+3. Tom Elvis Jedusor, MIMBLEWIMBLE, 19 July, 2016
+
+4. Merkle trees: http://en.wikipedia.org/wiki/Merkle_tree
+
+
+
+
+.............
